@@ -7,10 +7,17 @@ Author: Abraham (Priler)
 Github repo: https://github.com/Priler/samurai
 """
 
+import sys
+
+import warnings
 import asyncio
 import logging
-import sys
+
 from contextlib import suppress
+
+
+warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
+# warnings.filterwarnings("ignore", message=".*conflict with protected namespace.*")
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -21,15 +28,23 @@ from db import init_db, close_db
 from handlers import register_all_handlers
 from middlewares import register_all_middlewares
 from services.announcements import set_bot as set_announcements_bot, run_scheduler
-from services.healthcheck import start_health_server, stop_health_server, get_health_server
-from services.cache import start_batch_flush_task, stop_batch_flush_task, flush_member_updates
+from services.healthcheck import (
+    start_health_server,
+    stop_health_server,
+    get_health_server,
+)
+from services.cache import (
+    start_batch_flush_task,
+    stop_batch_flush_task,
+    flush_member_updates,
+)
 from services import ml_manager
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
@@ -40,7 +55,7 @@ _scheduler_task: asyncio.Task | None = None
 async def on_startup(bot: Bot) -> None:
     """Startup hook."""
     global _scheduler_task
-    
+
     logger.info("Bot starting up...")
 
     # Initialize database
@@ -53,7 +68,7 @@ async def on_startup(bot: Bot) -> None:
 
     # Setup announcements
     set_announcements_bot(bot)
-    
+
     # Start scheduler task
     _scheduler_task = asyncio.create_task(run_scheduler())
     logger.info("Announcements scheduled")
@@ -71,7 +86,7 @@ async def on_startup(bot: Bot) -> None:
 async def on_shutdown(bot: Bot) -> None:
     """Shutdown hook."""
     global _scheduler_task
-    
+
     logger.info("Bot shutting down...")
 
     # Set health check to not ready
@@ -96,7 +111,7 @@ async def on_shutdown(bot: Bot) -> None:
     # Close database
     await close_db()
     logger.info("Database disconnected")
-    
+
     # Stop health check server
     if config.healthcheck.enabled:
         await stop_health_server()
@@ -113,14 +128,13 @@ async def main() -> None:
     # Start health check server
     if config.healthcheck.enabled:
         await start_health_server(
-            host=config.healthcheck.host,
-            port=config.healthcheck.port
+            host=config.healthcheck.host, port=config.healthcheck.port
         )
 
     # Initialize bot and dispatcher
     bot = Bot(
         token=config.bot.token.get_secret_value(),
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     dp = Dispatcher()
 
@@ -134,7 +148,7 @@ async def main() -> None:
         enable_throttling=config.throttling.enabled,
         throttle_rate=config.throttling.rate_limit,
         throttle_max_messages=config.throttling.max_messages,
-        throttle_time_window=config.throttling.time_window
+        throttle_time_window=config.throttling.time_window,
     )
 
     # Setup startup/shutdown hooks

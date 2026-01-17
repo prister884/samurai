@@ -1,7 +1,9 @@
 """
 Utility helper functions.
 """
+
 import datetime
+from html import escape
 from typing import Optional
 
 import psutil
@@ -15,25 +17,25 @@ from utils.localization import get_string
 def get_message_text(message: Message) -> Optional[str]:
     """
     Extract text content from a message.
-    
+
     Handles both regular text messages and captions on media.
-    
+
     Args:
         message: The message to extract text from
-        
+
     Returns:
         The message text/caption or None if no text content
     """
     if message.content_type == ContentType.TEXT:
         return message.text
     elif message.content_type in (
-        ContentType.PHOTO, 
-        ContentType.DOCUMENT, 
+        ContentType.PHOTO,
+        ContentType.DOCUMENT,
         ContentType.VIDEO,
         ContentType.ANIMATION,
         ContentType.AUDIO,
         ContentType.VOICE,
-        ContentType.VIDEO_NOTE
+        ContentType.VIDEO_NOTE,
     ):
         return message.caption
     return None
@@ -41,7 +43,7 @@ def get_message_text(message: Message) -> Optional[str]:
 
 def user_mention(from_user) -> str:
     """Generate user mention HTML."""
-    _s = from_user.full_name
+    _s = escape(from_user.full_name)
 
     if from_user.full_name != from_user.mention_html():
         _s += " (" + from_user.mention_html() + ")"
@@ -57,13 +59,11 @@ def user_mention_by_id(user_id: int) -> str:
 
 
 def generate_log_message(
-    message: str,
-    log_type: str = "default",
-    chat_title: Optional[str] = None
+    message: str, log_type: str = "default", chat_title: Optional[str] = None
 ) -> str:
     """
     Generate formatted log message.
-    
+
     Args:
         message: Log message content
         log_type: Type of log (e.g., "ban", "mute", "spam")
@@ -73,10 +73,10 @@ def generate_log_message(
     current_time = now.strftime("%H:%M:%S")
 
     log_message = f"🕥 <i>{current_time}</i> "
-    
+
     if chat_title:
         log_message += f"[<b>{chat_title}</b>] "
-    
+
     log_message += f"<b>[{log_type.upper()}]</b> "
     log_message += message
 
@@ -84,14 +84,11 @@ def generate_log_message(
 
 
 async def write_log(
-    bot,
-    message: str,
-    log_type: str = "default",
-    chat_title: Optional[str] = None
+    bot, message: str, log_type: str = "default", chat_title: Optional[str] = None
 ):
     """
     Write log message to logs channel.
-    
+
     Args:
         bot: Bot instance
         message: Log message content
@@ -99,8 +96,7 @@ async def write_log(
         chat_title: Name of the chat (for multi-group support)
     """
     return await bot.send_message(
-        config.groups.logs,
-        generate_log_message(message, log_type, chat_title)
+        config.groups.logs, generate_log_message(message, log_type, chat_title)
     )
 
 
@@ -139,11 +135,11 @@ def get_report_comment(
     chat_id: int,
     report_message: Optional[str] = None,
     chat_title: Optional[str] = None,
-    reporter = None
+    reporter=None,
 ) -> str:
     """
     Generate report message for admins.
-    
+
     Args:
         message_date: Date of the reported message
         message_id: ID of the reported message
@@ -156,13 +152,13 @@ def get_report_comment(
     header = ""
     if chat_title:
         header = f"🟢 <b>{chat_title}</b>\n\n"
-    
+
     # pass variables directly to get_string for Fluent interpolation
     msg = header + get_string(
         "report_message",
         date=message_date.strftime(get_string("report_date_format")),
         chat_id=get_url_chat_id(chat_id),
-        msg_id=message_id
+        msg_id=message_id,
     )
 
     # Add reporter info
@@ -186,7 +182,7 @@ def get_url_chat_id(chat_id: int) -> int:
 def remove_prefix(text: str, prefix: str) -> str:
     """Remove prefix from text if present."""
     if text.startswith(prefix):
-        return text[len(prefix):]
+        return text[len(prefix) :]
     return text
 
 
